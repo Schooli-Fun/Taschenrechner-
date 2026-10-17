@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}</style>
+<title>Nspire-Lernpfad</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one calm focus column. Home = chapter path. Lesson = exactly one step card, big next button, nothing else competing. */
+:root{
+  --bg:#EDF1F4; --surface:#FFFFFF; --soft:#F4F7F9; --ink:#14202E; --muted:#5A6676; --line:#D3DBE3;
+  --accent:#0B6E78; --accent-ink:#FFFFFF; --accent-soft:#DDF0F1;
+  --key:#283447; --key-ink:#F2F5F8; --lcd:#F3F8F5;
+  --ok:#1B7A45; --ok-bg:#E1F3E8; --bad:#A8402B; --bad-bg:#FBEAE5; --warn:#7F5600; --warn-bg:#FBF0D6;
+  --c1:#0B6E78; --c2:#B4582A; --fill:rgba(11,110,120,.16);
+  --f-display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --base:17px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F151D; --surface:#17202B; --soft:#1D2734; --ink:#E6EBF1; --muted:#9CA8B7; --line:#2B3747;
+  --accent:#53C2CB; --accent-ink:#062428; --accent-soft:#163238;
+  --key:#3A4860; --key-ink:#EEF2F7; --lcd:#121C1E;
+  --ok:#62D398; --ok-bg:#132E20; --bad:#FF8E78; --bad-bg:#3A1C16; --warn:#F1C063; --warn-bg:#33280F;
+  --c1:#53C2CB; --c2:#F0A070; --fill:rgba(83,194,203,.2);
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0F151D; --surface:#17202B; --soft:#1D2734; --ink:#E6EBF1; --muted:#9CA8B7; --line:#2B3747;
+  --accent:#53C2CB; --accent-ink:#062428; --accent-soft:#163238;
+  --key:#3A4860; --key-ink:#EEF2F7; --lcd:#121C1E;
+  --ok:#62D398; --ok-bg:#132E20; --bad:#FF8E78; --bad-bg:#3A1C16; --warn:#F1C063; --warn-bg:#33280F;
+  --c1:#53C2CB; --c2:#F0A070; --fill:rgba(83,194,203,.2);
+  color-scheme:dark }
+:root[data-size="l"]{--base:19px} :root[data-size="xl"]{--base:21px}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:var(--base);line-height:1.6;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:20px 48px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15}
+p{margin:0}
+button{font:inherit;color:inherit}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--lcd);border:1px solid var(--line);border-radius:5px;padding:1px 6px;white-space:nowrap}
+kbd{font-family:var(--f-mono);font-size:.8em;font-weight:600;background:var(--key);color:var(--key-ink);border-radius:6px;padding:2px 8px;box-shadow:0 2px 0 rgba(0,0,0,.3);white-space:nowrap;display:inline-block;line-height:1.5}
+strong{font-weight:700}
+.eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* toolbar */
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.tgroup{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:.85rem;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.tbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.timer-time{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* home */
+.hero{display:flex;flex-direction:column;gap:10px}
+.hero h1{font-size:clamp(2rem,7vw,2.8rem);font-weight:800;letter-spacing:-.01em}
+.hero p{max-width:56ch;color:var(--muted)}
+.big{border:none;background:var(--accent);color:var(--accent-ink);border-radius:12px;padding:14px 22px;font-weight:700;font-size:1.05rem;cursor:pointer;display:inline-flex;align-items:center;gap:10px;justify-content:center}
+.big.ghost{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+.big:disabled{opacity:.45;cursor:default}
+.howto{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:10px}
+.howto div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:.92rem}
+.howto b{display:block;font-family:var(--f-display);font-size:1rem;margin-bottom:2px}
+.path{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0}
+.path li{display:grid;grid-template-columns:44px 1fr;gap:14px;position:relative}
+.path li:not(:last-child)::before{content:"";position:absolute;left:21px;top:44px;bottom:-4px;width:2px;background:var(--line)}
+.node{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;border:2px solid var(--line);background:var(--surface);color:var(--muted);z-index:1}
+.node.part{border-color:var(--accent);color:var(--accent)}
+.node.full{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.chap{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:6px 12px 22px;border-radius:10px;min-width:0}
+.chap:hover .chap-title{color:var(--accent)}
+.chap:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.chap-title{font-family:var(--f-display);font-weight:700;font-size:1.15rem}
+.chap-meta{font-size:.85rem;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.minibar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;max-width:260px}
+.minibar span{display:block;height:100%;background:var(--accent)}
+
+/* lesson */
+.lesson-top{display:flex;flex-direction:column;gap:10px}
+.lesson-top .row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.dots{display:flex;gap:6px;flex-wrap:wrap}
+.dot{width:26px;height:10px;border-radius:5px;border:none;background:var(--line);cursor:pointer;padding:0}
+.dot.done{background:var(--ok)}
+.dot.cur{background:var(--accent);outline:2px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:16px;min-height:300px}
+.card.solved{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok-bg)}
+.type{display:inline-flex;align-self:flex-start;gap:6px;align-items:center;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:999px}
+.type.info{background:var(--accent-soft);color:var(--accent)}
+.type.do{background:var(--warn-bg);color:var(--warn)}
+.card h2{font-size:clamp(1.35rem,4.5vw,1.65rem);font-weight:800}
+.body{display:flex;flex-direction:column;gap:12px;max-width:60ch}
+.body ul{margin:0;padding-left:1.2em;display:grid;gap:6px}
+.keypath{display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:var(--soft);border-radius:12px;padding:12px}
+.keypath .arrow{color:var(--muted);font-weight:700}
+.keypath .menu{font-size:.88rem;border:1px dashed var(--muted);border-radius:6px;padding:1px 8px}
+.merke{border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;padding:10px 14px}
+.merke b{color:var(--accent)}
+.try{display:flex;flex-direction:column;gap:10px;background:var(--warn-bg);border-radius:12px;padding:12px 14px}
+.try .label{font-weight:700;color:var(--warn)}
+.check{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;align-self:flex-start;border:2px solid var(--warn);color:var(--warn);background:transparent;border-radius:10px;padding:6px 12px}
+.check[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.tbl{overflow-x:auto}
+.tbl table{border-collapse:collapse;width:100%;font-size:.92rem}
+.tbl th,.tbl td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.plot{width:100%;max-width:420px;height:auto;align-self:center}
+.plot .ax{stroke:var(--muted);stroke-width:1}
+.plot .grid{stroke:var(--line);stroke-width:1}
+.plot text{fill:var(--muted);font-family:var(--f-mono);font-size:10px}
+.plot .lab{font-family:var(--f-body);font-size:12px;font-weight:700}
+.plot .f1{stroke:var(--c1);fill:none;stroke-width:2.5}
+.plot .f2{stroke:var(--c2);fill:none;stroke-width:2.5}
+.plot .l1{fill:var(--c1)} .plot .l2{fill:var(--c2)}
+.plot .area{fill:var(--fill);stroke:none}
+.plot .pt{fill:var(--ink)}
+.plot .ptl{fill:var(--ink);font-family:var(--f-body);font-size:12px;font-weight:700}
+.docmap{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+.docmap .doc{border:2px solid var(--accent);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;flex:1 1 260px}
+.docmap .pages{display:flex;gap:8px;flex-wrap:wrap}
+.docmap .pg{background:var(--soft);border-radius:8px;padding:8px 10px;font-size:.88rem;flex:1 1 100px}
+.docmap .pg b{display:block;font-size:.75rem;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+
+/* interactive */
+.q{font-size:1.08rem;font-weight:700;max-width:60ch}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;border:2px solid var(--line);background:var(--soft);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;gap:12px;align-items:center}
+.opt .l{font-family:var(--f-mono);font-weight:700;color:var(--muted);width:1.4em;flex:none}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg);opacity:.75}
+.opt:disabled{cursor:default}
+.order-pool,.order-done{display:flex;flex-direction:column;gap:8px}
+.order-done:empty{display:none}
+.order-done .item{border:2px solid var(--ok);background:var(--ok-bg);border-radius:10px;padding:10px 12px;display:flex;gap:10px}
+.order-done .item b{font-family:var(--f-mono);color:var(--ok)}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.part{display:flex;flex-direction:column;gap:8px}
+.part label{font-weight:700}
+.part .sub{font-weight:400;color:var(--muted)}
+.entry{display:flex;gap:8px;flex-wrap:wrap}
+.entry input{flex:1 1 200px;min-width:0;font-family:var(--f-mono);font-size:1rem;color:var(--ink);background:var(--lcd);border:2px solid var(--line);border-radius:10px;padding:11px 12px}
+.entry input:focus{outline:none;border-color:var(--accent)}
+.part.ok input{border-color:var(--ok)}
+.part.bad input{border-color:var(--bad)}
+.btn{border-radius:10px;padding:10px 16px;cursor:pointer;border:2px solid var(--accent);background:var(--accent);color:var(--accent-ink);font-weight:700}
+.btn.ghost{background:transparent;color:var(--accent)}
+.syms{display:flex;gap:6px;flex-wrap:wrap}
+.sym{font-family:var(--f-mono);font-size:.85rem;min-width:38px;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--soft);cursor:pointer}
+.fb{border-radius:10px;padding:9px 12px;font-weight:700}
+.fb.ok{background:var(--ok-bg);color:var(--ok)}
+.fb.bad{background:var(--bad-bg);color:var(--bad)}
+.fb.warn{background:var(--warn-bg);color:var(--warn)}
+.fb .ex{display:block;font-weight:400;margin-top:4px;color:var(--ink)}
+.helpers{display:flex;gap:8px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:12px}
+.panel{background:var(--soft);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.panel h3{font-family:var(--f-body);font-size:.95rem}
+.panel ol{margin:0;padding-left:1.3em}
+
+.navrow{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.navrow .big{flex:1 1 auto;max-width:320px}
+.navrow .big.ghost{flex:0 1 auto}
+.hint{font-size:.82rem;color:var(--muted);text-align:center}
+.banner{background:var(--warn-bg);color:var(--warn);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-weight:700}
+.banner .x{border:2px solid var(--warn);background:transparent;color:var(--warn);border-radius:10px;padding:6px 12px;cursor:pointer;font-weight:700}
+
+/* done */
+.done-card{text-align:left}
+.done-badge{width:64px;height:64px;border-radius:50%;background:var(--ok);display:grid;place-items:center}
+.done-badge svg{width:34px;height:34px;stroke:var(--surface);stroke-width:4;fill:none}
+.pop{animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.08)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion: reduce){.shake,.pop{animation:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app"></div>
+
+<script>
+/* =========================================================
+   INHALT – Kapitel und Schritte
+   Text-Markup: «menu» = Taste, `code` = Eingabe, **fett**
+   ========================================================= */
+const R3=Math.sqrt(3);
+const CH=[
+{id:"start",title:"Los geht's",min:5,goal:"Du findest dich auf dem Rechner zurecht.",
+ merke:["Der Rechner arbeitet mit Dokumenten. Jede Seite hat eine App.","Fast alle Befehle findest du über «menu».","Für Sinus und Kosinus in der Analysis: Bogenmaß. Für Winkel in Grad: Grad."],
+ steps:[
+ {t:"info",h:"Der Rechner ist wie ein Heft",b:"<p>Ein **Dokument** ist wie ein Heft. Darin gibt es **Seiten**. Auf jeder Seite läuft genau eine **App**.</p>",
+  docmap:true,
+  merke:"Calculator = rechnen. Graphs = zeichnen."},
+ {t:"info",h:"Diese 5 Tasten brauchst du ständig",b:"<div class='tbl'><table><tr><th>Taste</th><th>Was sie macht</th></tr><tr><td>«⌂»</td><td>Startbildschirm</td></tr><tr><td>«menu»</td><td>Alle Befehle der App</td></tr><tr><td>«enter»</td><td>Ausrechnen, bestätigen</td></tr><tr><td>«esc»</td><td>Abbrechen, zurück</td></tr><tr><td>«tab»</td><td>Zum nächsten Feld springen</td></tr></table></div><p>Mit dem **Touchpad** (die runde Fläche) bewegst du den Zeiger. Drück in die Mitte, um zu klicken.</p>"},
+ {t:"mc",q:"Du suchst einen Befehl, zum Beispiel um eine Gleichung zu lösen. Welche Taste drückst du zuerst?",o:["«⌂»","«menu»","«tab»","«esc»"],c:1,ex:"Im «menu» stehen alle Befehle der App, die gerade offen ist."},
+ {t:"info",h:"Dein erstes Dokument",b:"<p>So legst du ein neues Dokument mit Calculator an:</p>",keys:["«⌂»","Neu","Calculator hinzufügen"],
+  try:"Mach es jetzt an deinem Rechner. Tippe dann `2+3` und drück «enter»."},
+ {t:"order",q:"Bring die Schritte in die richtige Reihenfolge. Tippe sie nacheinander an.",items:["«⌂» drücken","Neu wählen","Calculator hinzufügen","`2+3` eintippen","«enter» drücken"],ex:"Genau so. Speichern kannst du danach mit «ctrl» «S»."},
+ {t:"info",h:"Zwei Einstellungen, die oft Ärger machen",b:"<p>Öffne: «⌂» → Einstellungen → Dokumenteinstellungen.</p><ul><li>**Winkel:** Für Analysis **Bogenmaß**. Für Dreiecke und Winkel in Grad **Grad**.</li><li>**Auto oder Näherung:** Stell **Auto** ein. Dann bekommst du exakte Ergebnisse wie √2.</li></ul>",
+  merke:"Falsche Winkel-Einstellung ist einer der häufigsten Fehler."},
+ {t:"mc",q:"Du rechnest sin(30) und willst 0,5 als Ergebnis. Was muss eingestellt sein?",o:["Bogenmaß","Grad","Näherung","Egal"],c:1,ex:"sin(30°) = 0,5. Im Bogenmaß bedeutet 30 aber 30 rad, und das ergibt etwas ganz anderes."}
+ ]},
+
+{id:"rechnen",title:"Rechnen im Calculator",min:8,goal:"Du rechnest exakt und als Dezimalzahl und formst Terme um.",
+ merke:["«enter» = exakt, «ctrl» «enter» = Dezimalzahl.","Kommazahlen mit Punkt: `2.5`. Das Komma trennt Angaben in Befehlen.","`factor` macht ein Produkt, `expand` multipliziert aus."],
+ steps:[
+ {t:"info",h:"Exakt oder Dezimalzahl?",b:"<p>Der Rechner rechnet **exakt**, wenn du «enter» drückst. Für eine **Dezimalzahl** drückst du «ctrl» «enter».</p><div class='tbl'><table><tr><th>Eingabe</th><th>«enter»</th><th>«ctrl» «enter»</th></tr><tr><td>`√(8)`</td><td>2·√2</td><td>2.82843</td></tr><tr><td>`1/3+1/4`</td><td>7/12</td><td>0.583333</td></tr></table></div>"},
+ {t:"mc",q:"Du tippst `√(8)` und drückst «enter». Was zeigt der Rechner?",o:["2.82843","2·√2","8","Fehler"],c:1,ex:"«enter» gibt das exakte Ergebnis. Die Dezimalzahl bekommst du mit «ctrl» «enter»."},
+ {t:"task",q:"Jetzt du: Berechne √50.",parts:[{label:"√50 =",kind:"num",ans:Math.sqrt(50),tol:.001,ph:"exakt oder als Dezimalzahl"}],tip:["Tippe `√(50)`. Das √ findest du über «ctrl» «x²».","Dann «enter» für exakt oder «ctrl» «enter» für die Dezimalzahl."],sol:"<p>5·√2 ≈ 7,0711</p>"},
+ {t:"info",h:"Punkt statt Komma",b:"<p>Der Rechner schreibt Kommazahlen mit **Punkt**: `2.5` statt 2,5.</p><p>Das **Komma** trennt Angaben in einem Befehl, zum Beispiel `solve(x^2=4, x)`.</p>",merke:"Komma in einer Zahl = Fehlermeldung."},
+ {t:"task",q:"Berechne 2/3 + 5/4.",parts:[{label:"Ergebnis",kind:"num",ans:23/12,tol:.001,ph:"z. B. 7/12"}],tip:["Tippe `2/3+5/4` und «enter».","Der Rechner zeigt einen Bruch. Den kannst du so eingeben."],sol:"<p>23/12 ≈ 1,9167</p>"},
+ {t:"info",h:"Terme umformen",b:"<p>Du findest beides unter «menu» → Algebra.</p><ul><li>`factor` macht aus einer Summe ein **Produkt**: `factor(x^2-4)` → (x−2)·(x+2)</li><li>`expand` multipliziert **aus**: `expand((x+1)^2)` → x²+2x+1</li></ul>",keys:["«menu»","Algebra","Faktorisieren / Entwickeln"]},
+ {t:"task",q:"Faktorisiere x² − 5x + 6.",parts:[{label:"Ergebnis",kind:"expr",ans:"x^2-5x+6",req:"factored",ph:"z. B. (x-…)(x-…)"}],tip:["`factor(x^2-5x+6)` und «enter»."],sol:"<p>(x − 2)·(x − 3)</p>"},
+ {t:"task",q:"Multipliziere (2x − 1)³ aus.",parts:[{label:"Ergebnis",kind:"expr",ans:"(2x-1)^3",req:"expanded",ph:"z. B. 8x^3-…"}],tip:["`expand((2x-1)^3)` und «enter».","Hochzahlen tippst du mit `^`."],sol:"<p>8x³ − 12x² + 6x − 1</p>"},
+ {t:"info",h:"Funktionen und Werte speichern",b:"<p>**Funktion festlegen:** `define f(x)=x^2-4x+3`. Danach kannst du `f(2)` rechnen.</p><p>**Zahl speichern:** `a:=5`. Das Zeichen `:=` bekommst du mit «ctrl» «var».</p>"},
+ {t:"mc",q:"Welche Eingabe legt eine Funktion fest, die der Rechner sich merkt?",o:["`f(x)=x^2`","`define f(x)=x^2`","`solve(f(x)=x^2)`","`x^2`"],c:1,ex:"Erst mit `define` merkt sich der Rechner die Funktion."}
+ ]},
+
+{id:"gleichungen",title:"Gleichungen lösen",min:8,goal:"Du löst Gleichungen und Gleichungssysteme mit solve.",
+ merke:["`solve(Gleichung, Variable)`: die Variable nie vergessen.","Systeme: Gleichungen mit `and` verbinden, Variablen in `{x,y}`.","Findet solve nichts, hilft `nSolve`."],
+ steps:[
+ {t:"info",h:"Der wichtigste Befehl: solve",b:"<p>So ist er aufgebaut:</p><p style='font-size:1.15rem'>`solve(Gleichung, Variable)`</p><p>Beispiel: `solve(x^2-5x+6=0, x)` ergibt x=2 oder x=3.</p>",keys:["«menu»","Algebra","Löse"]},
+ {t:"mc",q:"Was fehlt bei dieser Eingabe? `solve(x^2=9)`",o:["Die Variable: `, x`","Ein `define`","Ein «ctrl»","Nichts"],c:0,ex:"Der Rechner muss wissen, nach welcher Variablen er auflösen soll: `solve(x^2=9, x)`."},
+ {t:"task",q:"Löse 2x² − 3x − 5 = 0.",parts:[{label:"Alle Lösungen",sub:"(mit ; trennen)",kind:"set",ans:[-1,2.5],tol:.001,ph:"z. B. -1; 2,5"}],tip:["`solve(2x^2-3x-5=0, x)` und «enter»."],sol:"<p>x = −1 oder x = 5/2 = 2,5</p>"},
+ {t:"task",q:"Löse e<sup>2x</sup> = 25.",parts:[{label:"x =",kind:"num",ans:Math.log(5),tol:.001,ph:"exakt oder gerundet",miss:[{v:Math.log(25),m:"Das ist ln(25). Du musst noch durch 2 teilen."}]}],tip:["`solve(e^(2x)=25, x)`","Das e findest du auf der Taste «eˣ»."],sol:"<p>2x = ln(25), also x = ln(5) ≈ 1,609</p>"},
+ {t:"info",h:"Mehrere Gleichungen auf einmal",b:"<p>Verbinde die Gleichungen mit **and**. Schreib alle Variablen in geschweifte Klammern.</p><p>`solve(x+y=5 and x-y=1, {x,y})` → x=3 und y=2</p>",merke:"Die geschweiften Klammern { } findest du über «ctrl» «(»."},
+ {t:"task",q:"Löse das System: x + y + z = 6 · 2x − y + z = 3 · x + 2y − z = 2",parts:[{label:"x; y; z",sub:"(in dieser Reihenfolge)",kind:"tuple",ans:[1,2,3],tol:.001,ph:"z. B. 4; 5; 6"}],tip:["`solve(x+y+z=6 and 2x-y+z=3 and x+2y-z=2, {x,y,z})`"],sol:"<p>x = 1, y = 2, z = 3</p>"},
+ {t:"info",h:"Wenn solve aufgibt: nSolve",b:"<p>Manche Gleichungen kann der Rechner nicht exakt lösen. Dann nimm **nSolve**. Es sucht eine Näherung.</p><p>`nSolve(cos(x)=x, x)` → x ≈ 0.739</p>"},
+ {t:"task",q:"Bakterien: N(t) = 500 · 1,2<sup>t</sup> (t in Stunden). Wann sind es 2000 Bakterien?",parts:[{label:"t =",sub:"(Stunden)",kind:"num",ans:Math.log(4)/Math.log(1.2),tol:.01,ph:"z. B. 3,5"}],tip:["`solve(500*1.2^t=2000, t)`","Für die Dezimalzahl «ctrl» «enter»."],sol:"<p>1,2<sup>t</sup> = 4 → t = ln(4)/ln(1,2) ≈ 7,60 Stunden</p>"}
+ ]},
+
+{id:"graphen",title:"Graphen zeichnen",min:8,goal:"Du zeichnest Funktionen und findest besondere Punkte.",
+ merke:["Neue Graphs-Seite: «ctrl» «doc» → Graphs.","«menu» → Graph analysieren findet Nullstellen, Hoch-, Tief- und Schnittpunkte.","Linke und rechte Grenze setzen: der Punkt muss dazwischen liegen."],
+ steps:[
+ {t:"info",h:"Eine Graphs-Seite öffnen",b:"<p>Unten steht `f1(x)=`. Tippe den Term ein und drück «enter». Für eine zweite Funktion drückst du «tab».</p>",keys:["«ctrl» «doc»","Graphs hinzufügen"],
+  try:"Zeichne `f1(x)=x^2` und `f2(x)=x+2`."},
+ {t:"info",h:"So sollte es aussehen",b:"<p>Die Parabel und die Gerade schneiden sich **zweimal**.</p>",
+  plot:{xr:[-3,3.5],yr:[-1,7],fns:[{f:x=>x*x,lab:"f",c:1},{f:x=>x+2,lab:"g",c:2}]}},
+ {t:"info",h:"Besondere Punkte finden",b:"<div class='tbl'><table><tr><th>Menüpunkt</th><th>Findet</th></tr><tr><td>Nullstelle</td><td>Schnitt mit der x-Achse</td></tr><tr><td>Minimum / Maximum</td><td>Tiefpunkt / Hochpunkt</td></tr><tr><td>Schnittpunkt</td><td>Schnitt von zwei Graphen</td></tr><tr><td>Wendepunkt</td><td>Wendepunkt</td></tr></table></div>",keys:["«menu»","Graph analysieren","…"]},
+ {t:"order",q:"So findest du einen Schnittpunkt. Bring die Schritte in die richtige Reihenfolge.",items:["«menu» → Graph analysieren → Schnittpunkt","Ersten Graphen anklicken","Zweiten Graphen anklicken","Linke Grenze setzen","Rechte Grenze setzen"],ex:"Der Schnittpunkt muss zwischen linker und rechter Grenze liegen. Sonst findet der Rechner ihn nicht."},
+ {t:"task",q:"Bestimme die x-Werte der Schnittpunkte von f(x) = x² und g(x) = x + 2.",parts:[{label:"x-Werte",sub:"(mit ; trennen)",kind:"set",ans:[-1,2],tol:.001,ph:"z. B. -3; 4"}],tip:["«menu» → Graph analysieren → Schnittpunkt.","Mach das zweimal: einmal links, einmal rechts."],sol:"<p>S₁(−1 | 1) und S₂(2 | 4)</p>"},
+ {t:"mc",q:"Du siehst deinen Graphen nicht auf dem Bildschirm. Was hilft am schnellsten?",o:["Rechner neu starten","«menu» → Fenster/Zoom → Zoom – Anpassen","Funktion löschen","«esc» drücken"],c:1,ex:"Zoom – Anpassen sucht einen Bereich, in dem du den Graphen siehst."},
+ {t:"mc",q:"Du willst den Hochpunkt eines Graphen finden. Welchen Menüpunkt wählst du?",o:["Minimum","Nullstelle","Maximum","Wendepunkt"],c:2,ex:"Hochpunkt = Maximum. Tiefpunkt = Minimum."}
+ ]},
+
+{id:"analysis",title:"Ableiten und Integrieren",min:12,goal:"Du leitest ab, integrierst und machst eine Kurvendiskussion.",
+ merke:["«menu» → Analysis → Ableitung oder Integral. Mit «tab» durch die Felder.","Fläche zwischen zwei Graphen: ∫ (oben − unten), Grenzen = Schnittstellen.","Eigene Ableitungen nicht f1 oder f2 nennen. Die Namen benutzt die Graphs-App."],
+ steps:[
+ {t:"info",h:"Ableiten",b:"<p>Der Rechner öffnet eine Vorlage. Tippe den Term ein.</p><p>`d/dx(x^3-6x^2+9x)` → 3x² − 12x + 9</p>",keys:["«menu»","Analysis","Ableitung"]},
+ {t:"task",q:"Leite h(x) = x² · e<sup>−x</sup> ab.",parts:[{label:"h′(x) =",kind:"expr",ans:"(2x-x^2)*e^(-x)",ph:"z. B. (…)*e^(-x)"}],tip:["«menu» → Analysis → Ableitung","`d/dx(x^2*e^(-x))`","Der Rechner sortiert vielleicht anders. Das ist okay."],sol:"<p>h′(x) = (2x − x²)·e<sup>−x</sup></p><p>Das ist die Produktregel.</p>"},
+ {t:"info",h:"Integrieren",b:"<p>In der Vorlage gibt es vier Felder: untere Grenze, obere Grenze, Term, Variable. Mit «tab» springst du weiter.</p><p>Ohne Grenzen bekommst du eine Stammfunktion.</p>",keys:["«menu»","Analysis","Integral"]},
+ {t:"task",q:"Berechne ∫ von 0 bis 3 (x² + 1) dx.",parts:[{label:"Ergebnis",kind:"num",ans:12,tol:.001,ph:"z. B. 7"}],tip:["Untere Grenze 0, obere Grenze 3, Term `x^2+1`, Variable x."],sol:"<p>[x³/3 + x] von 0 bis 3 = 9 + 3 = 12</p>"},
+ {t:"info",h:"Fläche zwischen zwei Graphen",b:"<p>Rechne **oberer Graph minus unterer Graph**. Die Grenzen sind die Schnittstellen.</p>",
+  plot:{xr:[-2,3],yr:[-1,6],fns:[{f:x=>x*x,lab:"f",c:1},{f:x=>x+2,lab:"g",c:2}],area:{top:1,bot:0,a:-1,b:2}},
+  merke:"Hier liegt g oben. Also ∫ (g(x) − f(x)) dx von −1 bis 2."},
+ {t:"task",q:"Berechne die markierte Fläche zwischen f(x) = x² und g(x) = x + 2.",parts:[{label:"A =",sub:"(Flächeneinheiten)",kind:"num",ans:4.5,tol:.001,ph:"z. B. 3,2",miss:[{v:-4.5,m:"Negativ. Eine Fläche ist immer positiv. Rechne oben minus unten: g − f."}]}],tip:["Integral von −1 bis 2 über `x+2-x^2`."],sol:"<p>A = ∫ von −1 bis 2 (x + 2 − x²) dx = 4,5 FE</p>"},
+ {t:"order",q:"Kurvendiskussion mit dem CAS: In welcher Reihenfolge gehst du vor?",items:["Funktion mit `define` festlegen","Nullstellen: `solve(f(x)=0, x)`","Ableitungen festlegen","Extremstellen: f′(x) = 0 lösen","Mit der 2. Ableitung prüfen: Hoch- oder Tiefpunkt?","y-Werte ausrechnen"],ex:"Genau. Schreib in der Klausur jeden Ansatz auf, z. B. f′(x) = 0."},
+ {t:"info",h:"Jetzt kommt eine echte Kurvendiskussion",b:"<p>Wir untersuchen k(x) = x³ − 3x in drei kleinen Schritten.</p><p>Leg zuerst fest:</p><p>`define k(x)=x^3-3x`<br>`define ka(x)=d/dx(k(x))`<br>`define kb(x)=d/dx(ka(x))`</p>",
+  plot:{xr:[-2.5,2.5],yr:[-3.5,3.5],fns:[{f:x=>x**3-3*x,lab:"k",c:1}]},
+  merke:"ka = 1. Ableitung, kb = 2. Ableitung."},
+ {t:"task",q:"Schritt 1: Nullstellen von k(x) = x³ − 3x.",parts:[{label:"Nullstellen",sub:"(mit ; trennen)",kind:"set",ans:[-R3,0,R3],tol:.001,ph:"z. B. -√2; 0; √2"}],tip:["`solve(k(x)=0, x)`"],sol:"<p>x = −√3 ≈ −1,732; x = 0; x = √3 ≈ 1,732</p>"},
+ {t:"task",q:"Schritt 2: Hochpunkt und Tiefpunkt von k.",parts:[{label:"Hochpunkt",sub:"(x; y)",kind:"tuple",ans:[-1,2],tol:.001,ph:"z. B. 3; 4"},{label:"Tiefpunkt",sub:"(x; y)",kind:"tuple",ans:[1,-2],tol:.001,ph:"z. B. 3; 4"}],tip:["`solve(ka(x)=0, x)` gibt die x-Werte.","`kb(-1)` und `kb(1)`: negativ = Hochpunkt, positiv = Tiefpunkt.","`k(-1)` und `k(1)` geben die y-Werte."],sol:"<p>ka(x) = 0 → x = −1 oder x = 1</p><p>kb(−1) = −6 &lt; 0 → H(−1 | 2)</p><p>kb(1) = 6 &gt; 0 → T(1 | −2)</p>"},
+ {t:"task",q:"Schritt 3: Wendepunkt von k.",parts:[{label:"Wendepunkt",sub:"(x; y)",kind:"tuple",ans:[0,0],tol:.001,ph:"z. B. 3; 4"}],tip:["`solve(kb(x)=0, x)`, dann `k(…)` für den y-Wert."],sol:"<p>kb(x) = 6x = 0 → x = 0 → W(0 | 0)</p>"}
+ ]},
+
+{id:"vektoren",title:"Vektoren und Matrizen",min:8,goal:"Du rechnest mit Vektoren und Matrizen.",
+ merke:["Vektor: `[2,3,6]`. Matrix: `[[4,2][1,1]]`, jede innere Klammer ist eine Zeile.","`norm` = Länge, `dotP` = Skalarprodukt, `crossP` = Kreuzprodukt.","`det(a)` = Determinante, `a^(-1)` = Inverse."],
+ steps:[
+ {t:"info",h:"Vektoren eingeben",b:"<p>Vektoren schreibst du in **eckige Klammern**: `[2,3,6]`.</p><p>Speichern mit `:=` (über «ctrl» «var»):</p><p>`u:=[2,3,6]`<br>`v:=[1,0,-1]`</p>",try:"Speichere u und v jetzt im Rechner."},
+ {t:"info",h:"Die drei Vektor-Befehle",b:"<div class='tbl'><table><tr><th>Befehl</th><th>Berechnet</th></tr><tr><td>`norm(u)`</td><td>Länge |u|</td></tr><tr><td>`dotP(u,v)`</td><td>Skalarprodukt u · v</td></tr><tr><td>`crossP(u,v)`</td><td>Kreuzprodukt u × v</td></tr></table></div>",keys:["«menu»","Matrix & Vektor","Vektor"]},
+ {t:"mc",q:"Du willst prüfen, ob zwei Vektoren senkrecht sind. Welchen Befehl brauchst du?",o:["`norm`","`crossP`","`dotP`","`det`"],c:2,ex:"Senkrecht heißt: Skalarprodukt = 0. Also `dotP`."},
+ {t:"task",q:"u = (2, 3, 6) und v = (1, 0, −1). Berechne Länge und Skalarprodukt.",parts:[{label:"|u| =",kind:"num",ans:7,tol:.001,ph:"z. B. 5"},{label:"u · v =",kind:"num",ans:-4,tol:.001,ph:"z. B. 3"}],tip:["`norm(u)` und `dotP(u,v)`"],sol:"<p>|u| = √(4 + 9 + 36) = 7</p><p>u · v = 2 + 0 − 6 = −4</p>"},
+ {t:"task",q:"Berechne das Kreuzprodukt u × v.",parts:[{label:"u × v",sub:"(drei Werte mit ; trennen)",kind:"tuple",ans:[-3,8,-3],tol:.001,ph:"z. B. 1; 2; 3"}],tip:["`crossP(u,v)`"],sol:"<p>u × v = (−3, 8, −3)</p>"},
+ {t:"info",h:"Matrizen",b:"<p>Jede innere Klammer ist eine **Zeile**:</p><p>`a:=[[4,2][1,1]]`</p><p>Determinante: `det(a)`<br>Inverse: `a^(-1)`</p>"},
+ {t:"task",q:"A = [[4, 2][1, 1]]. Berechne die Determinante und die Inverse.",parts:[{label:"det(A) =",kind:"num",ans:2,tol:.001,ph:"z. B. 5"},{label:"A⁻¹",sub:"(4 Einträge zeilenweise, mit ; trennen)",kind:"tuple",ans:[.5,-1,-.5,2],tol:.001,ph:"z. B. 1; 2; 3; 4"}],tip:["`det(a)` und `a^(-1)`"],sol:"<p>det(A) = 4·1 − 2·1 = 2</p><p>A⁻¹ = [[1/2, −1][−1/2, 2]]</p>"}
+ ]},
+
+{id:"stochastik",title:"Stochastik",min:12,goal:"Du berechnest Wahrscheinlichkeiten bei Binomial- und Normalverteilung.",
+ merke:["Pdf = genau ein Wert. Cdf = ein Bereich.","`binomCdf(n,p,von,bis)`: „höchstens k“ = von 0 bis k, „mindestens k“ = von k bis n.","`normCdf(a,b,μ,σ)` für Bereiche, `invNorm(Fläche,μ,σ)` für Grenzen."],
+ steps:[
+ {t:"info",h:"Pdf oder Cdf?",b:"<p>Das ist die wichtigste Unterscheidung:</p><ul><li>**Pdf** = genau ein Wert: P(X = 5)</li><li>**Cdf** = ein Bereich: P(2 ≤ X ≤ 5)</li></ul>",keys:["«menu»","Wahrscheinlichkeit","Verteilungen"],merke:"Pdf: genau. Cdf: Bereich."},
+ {t:"mc",q:"Gesucht ist P(X = 5). Welchen Befehl nimmst du?",o:["`binomPdf`","`binomCdf`","`normCdf`","`invNorm`"],c:0,ex:"Genau ein Wert → Pdf."},
+ {t:"info",h:"Binomialverteilung",b:"<div class='tbl'><table><tr><th>Gesucht</th><th>Eingabe</th></tr><tr><td>P(X = k)</td><td>`binomPdf(n,p,k)`</td></tr><tr><td>P(X ≤ k)</td><td>`binomCdf(n,p,0,k)`</td></tr><tr><td>P(X ≥ k)</td><td>`binomCdf(n,p,k,n)`</td></tr></table></div><p>n = Anzahl Versuche, p = Trefferwahrscheinlichkeit.</p>"},
+ {t:"mc",q:"n = 10. Gesucht ist P(X ≥ 3). Welche Eingabe stimmt?",o:["`binomCdf(10,p,0,3)`","`binomCdf(10,p,3,10)`","`binomPdf(10,p,3)`","`binomCdf(10,p,4,10)`"],c:1,ex:"Mindestens 3 heißt: von 3 bis 10."},
+ {t:"task",q:"Ein Spieler trifft mit p = 0,3. Er wirft 20-mal. Wie groß ist P(genau 6 Treffer)?",parts:[{label:"P(X = 6)",kind:"num",ans:.19164,tol:.0006,ph:"z. B. 0,123"}],tip:["`binomPdf(20,0.3,6)`"],sol:"<p>≈ 0,1916</p>"},
+ {t:"task",q:"Gleicher Spieler: P(höchstens 4 Treffer)?",parts:[{label:"P(X ≤ 4)",kind:"num",ans:.23751,tol:.0006,ph:"z. B. 0,123",miss:[{v:.13042,m:"Das ist P(X ≤ 3). „Höchstens 4“ heißt 0 bis 4."}]}],tip:["`binomCdf(20,0.3,0,4)`"],sol:"<p>≈ 0,2375</p>"},
+ {t:"task",q:"Gleicher Spieler: P(mindestens 10 Treffer)?",parts:[{label:"P(X ≥ 10)",kind:"num",ans:.04796,tol:.0006,ph:"z. B. 0,123",miss:[{v:.95204,m:"Das ist P(X ≤ 9), das Gegenteil. Gesucht ist P(X ≥ 10)."},{v:.11333,m:"Das ist P(X ≥ 9). Die untere Grenze ist 10."}]}],tip:["`binomCdf(20,0.3,10,20)`"],sol:"<p>≈ 0,0480</p>"},
+ {t:"info",h:"Normalverteilung",b:"<div class='tbl'><table><tr><th>Gesucht</th><th>Eingabe</th></tr><tr><td>P(a ≤ X ≤ b)</td><td>`normCdf(a,b,μ,σ)`</td></tr><tr><td>P(X ≥ a)</td><td>`normCdf(a,10^99,μ,σ)`</td></tr><tr><td>Grenze x zu einer Fläche</td><td>`invNorm(Fläche,μ,σ)`</td></tr></table></div><p>Statt ∞ kannst du einfach `10^99` tippen.</p>"},
+ {t:"mc",q:"Welche Größe überschreiten nur 10 % der Personen (μ = 170, σ = 8)?",o:["`invNorm(0.1,170,8)`","`invNorm(0.9,170,8)`","`normCdf(0,0.1,170,8)`","`normCdf(170,10^99,170,8)`"],c:1,ex:"invNorm rechnet immer mit der Fläche links. 90 % liegen darunter, 10 % darüber."},
+ {t:"task",q:"Körpergröße: μ = 170 cm, σ = 8 cm. Berechne P(160 ≤ X ≤ 180).",parts:[{label:"P",kind:"num",ans:.7887,tol:.0006,ph:"z. B. 0,5"}],tip:["`normCdf(160,180,170,8)`"],sol:"<p>≈ 0,7887</p>"},
+ {t:"task",q:"Wie groß ist P(X > 185)?",parts:[{label:"P",kind:"num",ans:.0304,tol:.0006,ph:"z. B. 0,5",miss:[{v:.9696,m:"Das ist P(X ≤ 185). Gesucht sind die Personen über 185 cm."}]}],tip:["`normCdf(185,10^99,170,8)`"],sol:"<p>≈ 0,0304</p>"},
+ {t:"task",q:"Welche Größe überschreiten nur 10 % der Personen?",parts:[{label:"x =",sub:"(cm)",kind:"num",ans:180.25,tol:.15,ph:"z. B. 175",miss:[{v:159.75,m:"Diese Größe überschreiten 90 %. Nimm invNorm(0.9, …)."}]}],tip:["`invNorm(0.9,170,8)`"],sol:"<p>≈ 180,3 cm</p>"}
+ ]},
+
+{id:"profi",title:"Profi-Tipps und Prüfung",min:5,goal:"Du vermeidest die häufigsten Fehler und kennst den Prüfungsmodus.",
+ merke:["Malzeichen setzen: `x*y`, nicht `xy`.","Brüche immer mit Klammern: `(x+1)/(x-1)`.","In der Klausur: erst den Ansatz aufschreiben, dann rechnen."],
+ steps:[
+ {t:"info",h:"Die 4 häufigsten Fehler",b:"<ul><li>**Komma statt Punkt:** `2.5` schreiben.</li><li>**xy ohne Malzeichen:** Der Rechner liest xy als eine Variable. Schreib `x*y`.</li><li>**Klammern vergessen:** `(x+1)/(x-1)`, nicht `x+1/x-1`.</li><li>**Alte Werte:** Hat x noch einen alten Wert, wird das Ergebnis komisch.</li></ul>"},
+ {t:"mc",q:"Welche Eingabe bedeutet (x + 1) geteilt durch (x − 1)?",o:["`x+1/x-1`","`(x+1)/(x-1)`","`x+1/(x-1)`","`(x+1)/x-1`"],c:1,ex:"Ohne Klammern teilt der Rechner nur die 1 durch x."},
+ {t:"mc",q:"Du willst x mal y rechnen. Was tippst du?",o:["`xy`","`x y`","`x*y`","`x(y)`"],c:2,ex:"Mit `*` weiß der Rechner sicher, dass du malnehmen willst."},
+ {t:"info",h:"Alte Werte löschen",b:"<p>Wenn Ergebnisse komisch aussehen, hat eine Variable vielleicht noch einen alten Wert.</p>",keys:["«menu»","Aktionen","Löschen a–z"],merke:"Tipp: Für jede neue Aufgabe ein neues Dokument anlegen."},
+ {t:"info",h:"Prüfungsmodus (Press-to-Test)",b:"<p>In Klausuren nutzen viele Schulen diesen Modus. Deine eigenen Dokumente sind dann gesperrt.</p><ol style='margin:0;padding-left:1.3em'><li>Rechner ausschalten.</li><li>«esc» und «⌂» gedrückt halten und «on» drücken.</li><li>Einstellungen bestätigen.</li></ol><p>Welche Einstellungen gelten, sagt dir deine Lehrkraft.</p>"},
+ {t:"mc",q:"Was gehört in der Klausur aufs Papier, auch wenn der Rechner alles kann?",o:["Nur das Endergebnis","Der Ansatz, z. B. f′(x) = 0","Die Tasten, die du gedrückt hast","Nichts"],c:1,ex:"Der Rechner ersetzt nicht den Lösungsweg. Ansatz und Ergebnis gehören aufs Papier."}
+ ]}
+];
+
+/* =========================================================
+   PRÜFER für Eingaben
+   ========================================================= */
+function normz(s){return s.trim().toLowerCase().replace(/[−–]/g,"-").replace(/[·×⋅]/g,"*").replace(/÷/g,"/").replace(/π/g,"pi").replace(/²/g,"^2").replace(/³/g,"^3").replace(/(\d),(\d)/g,"$1.$2")}
+function tokenize(s){const t=[];let i=0;while(i<s.length){const c=s[i];
+  if(c===" "){i++;continue}
+  if(/[0-9.]/.test(c)){let j=i;while(j<s.length&&/[0-9.]/.test(s[j]))j++;const v=parseFloat(s.slice(i,j));if(isNaN(v))throw 0;t.push({t:"num",v});i=j;continue}
+  if(c==="√"){t.push({t:"fn",v:"sqrt"});i++;continue}
+  if(/[a-z]/.test(c)){const m=s.slice(i).match(/^(sqrt|wurzel|ln|log|exp|sin|cos|tan|pi|e|x)/);if(!m)throw 0;const w=m[1];
+    if(w==="pi")t.push({t:"num",v:Math.PI});else if(w==="e")t.push({t:"num",v:Math.E});else if(w==="x")t.push({t:"x"});else t.push({t:"fn",v:w==="wurzel"?"sqrt":w});i+=w.length;continue}
+  if("+-*/^()".includes(c)){t.push({t:c});i++;continue}
+  throw 0}return t}
+const FN={sqrt:Math.sqrt,ln:Math.log,log:Math.log10,exp:Math.exp,sin:Math.sin,cos:Math.cos,tan:Math.tan};
+function parse(str){const tk=tokenize(str);let p=0;const peek=()=>tk[p],eat=t=>{if(tk[p]&&tk[p].t===t){p++;return true}return false};
+  const startsAtom=k=>k&&(k.t==="num"||k.t==="x"||k.t==="fn"||k.t==="(");
+  function expr(){let f=term();while(peek()&&(peek().t==="+"||peek().t==="-")){const op=tk[p++].t,a=f,b=term();f=op==="+"?x=>a(x)+b(x):x=>a(x)-b(x)}return f}
+  function term(){let f=unary();for(;;){const k=peek();if(k&&(k.t==="*"||k.t==="/")){p++;const a=f,b=unary();f=k.t==="*"?x=>a(x)*b(x):x=>a(x)/b(x)}else if(startsAtom(k)){const a=f,b=power();f=x=>a(x)*b(x)}else break}return f}
+  function unary(){if(eat("-")){const a=unary();return x=>-a(x)}if(eat("+"))return unary();return power()}
+  function power(){const a=atom();if(eat("^")){const b=unary();return x=>Math.pow(a(x),b(x))}return a}
+  function atom(){const k=tk[p++];if(!k)throw 0;if(k.t==="num"){const v=k.v;return()=>v}if(k.t==="x")return x=>x;
+    if(k.t==="fn"){const g=FN[k.v],a=power();return x=>g(a(x))}if(k.t==="("){const a=expr();if(!eat(")"))throw 0;return a}throw 0}
+  const f=expr();if(p!==tk.length)throw 0;return f}
+function value(s){s=normz(s);let pct=false;if(s.endsWith("%")){pct=true;s=s.slice(0,-1).trim()}if(!s)return null;
+  try{const v=parse(s)(0);if(!isFinite(v))return null;return pct?v/100:v}catch(e){return null}}
+function listv(s){let r=s.trim();if(/[|;]/.test(r)&&/^[a-zA-Z]*\s*\(/.test(r)&&/\)\s*$/.test(r))r=r.replace(/^[a-zA-Z]*\s*\(/,"").replace(/\)\s*$/,"");
+  let parts=/[;|]/.test(r)?r.split(/[;|]|\boder\b|\bund\b/):r.split(/,|\boder\b|\bund\b/);
+  parts=parts.map(x=>x.replace(/^\s*[a-z]\s*=\s*/i,"")).filter(x=>x.trim()!=="");
+  const v=parts.map(value);return v.some(x=>x===null)?null:v}
+const close=(a,b,t)=>Math.abs(a-b)<=t;
+function check(part,raw){
+  if(!raw.trim())return{s:"warn",m:"Gib zuerst ein Ergebnis ein."};
+  if(part.kind==="num"){const v=value(raw.replace(/^\s*[a-z]\s*=\s*/i,""));
+    if(v===null)return{s:"warn",m:"Das kann ich nicht lesen. Schreib nur eine Zahl oder einen Term wie 5√2."};
+    if(close(v,part.ans,part.tol))return{s:"ok"};
+    for(const mi of part.miss||[])if(close(v,mi.v,part.tol*1.5))return{s:"bad",m:mi.m};
+    return{s:"bad",m:"Noch nicht. Prüf deine Eingabe am Rechner oder schau dir den Tipp an."}}
+  if(part.kind==="set"||part.kind==="tuple"){const v=listv(raw);
+    if(!v)return{s:"warn",m:"Das kann ich nicht lesen. Trenn mehrere Werte mit einem Semikolon, z. B. -1; 2,5"};
+    if(v.length!==part.ans.length)return{s:"bad",m:`Gesucht sind ${part.ans.length} Werte. Du hast ${v.length} eingegeben.`};
+    if(part.kind==="tuple"){if(v.every((x,i)=>close(x,part.ans[i],part.tol)))return{s:"ok"};
+      const so=a=>[...a].sort((p,q)=>p-q);if(so(v).every((x,i)=>close(x,so(part.ans)[i],part.tol)))return{s:"bad",m:"Die Werte stimmen, aber die Reihenfolge nicht."};
+      return{s:"bad",m:"Noch nicht. Prüf jeden Wert einzeln."}}
+    const left=[...part.ans];for(const x of v){const i=left.findIndex(a=>close(a,x,part.tol));if(i<0)return{s:"bad",m:"Mindestens ein Wert stimmt noch nicht."};left.splice(i,1)}
+    return{s:"ok"}}
+  if(part.kind==="expr"){let f,g;
+    try{f=parse(normz(raw.replace(/^\s*[a-z]′?'?\(x\)\s*=\s*/i,"")));g=parse(normz(part.ans))}catch(e){return{s:"warn",m:"Das kann ich nicht lesen. Benutz x, ^ für Hochzahlen und * zum Malnehmen."}}
+    const xs=[-1.7,-.6,.35,1.3,2.45,3.1];
+    if(!xs.every(x=>{const a=f(x),b=g(x);return isFinite(a)&&Math.abs(a-b)<=1e-6*Math.max(1,Math.abs(b))}))return{s:"bad",m:"Der Term ist nicht gleichwertig. Prüf Vorzeichen und Hochzahlen."};
+    const opens=(raw.match(/\(/g)||[]).length;
+    if(part.req==="factored"&&opens<2)return{s:"warn",m:"Der Term stimmt, ist aber noch kein Produkt. Schreib ihn mit Klammern."};
+    if(part.req==="expanded"&&opens>0)return{s:"warn",m:"Der Term stimmt, aber es sind noch Klammern drin. Multiplizier ganz aus."};
+    return{s:"ok"}}
+}
+
+/* =========================================================
+   ZUSTAND (nur in diesem Browser)
+   ========================================================= */
+const KEY="nspire-lernpfad-v1";
+let S={done:{},ans:{},pos:null,size:"m"};
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s&&typeof s==="object")S=Object.assign(S,s)}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const sk=(c,i)=>CH[c].id+":"+i;
+const chapDone=c=>CH[c].steps.filter((_,i)=>S.done[sk(c,i)]).length;
+document.documentElement.dataset.size=S.size||"m";
+
+/* =========================================================
+   HILFSFUNKTIONEN
+   ========================================================= */
+const md=s=>s.replace(/«([^»]+)»/g,"<kbd>$1</kbd>").replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
+const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
+const PRAISE=["Richtig!","Stark!","Genau so!","Super gemacht!","Treffer!","Sitzt!"];
+const praise=()=>PRAISE[Math.floor(Math.random()*PRAISE.length)];
+function shuffle(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]]}
+  if(r.every((x,i)=>x===a[i])&&r.length>1)[r[0],r[1]]=[r[1],r[0]];return r}
+
+function plotSVG(P){
+  const W=340,H=230,m=24;
+  const sx=x=>m+(x-P.xr[0])/(P.xr[1]-P.xr[0])*(W-2*m), sy=y=>H-m-(y-P.yr[0])/(P.yr[1]-P.yr[0])*(H-2*m);
+  let g="";
+  for(let x=Math.ceil(P.xr[0]);x<=P.xr[1];x++){g+=`<line class="grid" x1="${sx(x)}" y1="${m}" x2="${sx(x)}" y2="${H-m}"/>`;if(x!==0)g+=`<text x="${sx(x)}" y="${sy(0)+13}" text-anchor="middle">${x}</text>`}
+  for(let y=Math.ceil(P.yr[0]);y<=P.yr[1];y++){g+=`<line class="grid" x1="${m}" y1="${sy(y)}" x2="${W-m}" y2="${sy(y)}"/>`;if(y!==0)g+=`<text x="${sx(0)-5}" y="${sy(y)+3}" text-anchor="end">${y}</text>`}
+  g+=`<line class="ax" x1="${m}" y1="${sy(0)}" x2="${W-m}" y2="${sy(0)}"/><line class="ax" x1="${sx(0)}" y1="${m}" x2="${sx(0)}" y2="${H-m}"/>`;
+  g+=`<text x="${W-m+4}" y="${sy(0)+4}">x</text><text x="${sx(0)+5}" y="${m-6}">y</text>`;
+  const clipY=y=>Math.max(P.yr[0]-1,Math.min(P.yr[1]+1,y));
+  if(P.area){const a=P.area,ft=P.fns[a.top].f,fb=P.fns[a.bot].f;let d="";const n=60;
+    for(let i=0;i<=n;i++){const x=a.a+(a.b-a.a)*i/n;d+=(i?"L":"M")+sx(x).toFixed(1)+","+sy(ft(x)).toFixed(1)}
+    for(let i=n;i>=0;i--){const x=a.a+(a.b-a.a)*i/n;d+="L"+sx(x).toFixed(1)+","+sy(fb(x)).toFixed(1)}
+    g+=`<path class="area" d="${d}Z"/>`}
+  P.fns.forEach((F,k)=>{let d="",n=160,last=null;
+    for(let i=0;i<=n;i++){const x=P.xr[0]+(P.xr[1]-P.xr[0])*i/n,y=F.f(x);d+=(i?"L":"M")+sx(x).toFixed(1)+","+sy(clipY(y)).toFixed(1);if(y>=P.yr[0]&&y<=P.yr[1])last=[x,y]}
+    g+=`<path class="f${F.c}" d="${d}"/>`;
+    if(last)g+=`<text class="lab l${F.c}" x="${Math.min(sx(last[0])+4,W-m-8)}" y="${sy(last[1])-6}">${F.lab}</text>`});
+  return `<svg class="plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="Graph"><defs><clipPath id="cp"><rect x="${m}" y="${m}" width="${W-2*m}" height="${H-2*m}"/></clipPath></defs><g clip-path="url(#cp)">${g.replace(/<text[^>]*>[^<]*<\/text>/g,"")}</g>${(g.match(/<text[^>]*>[^<]*<\/text>/g)||[]).join("")}</svg>`;
+}
+
+/* =========================================================
+   FOKUS-TIMER
+   ========================================================= */
+const T={end:null,iv:null,ring:false};
+function timerLabel(){if(!T.end)return "Fokus 15 min";const r=Math.max(0,T.end-Date.now()),m=Math.floor(r/60000),s=Math.floor(r%60000/1000);return `${m}:${String(s).padStart(2,"0")}`}
+function toggleTimer(){
+  if(T.end){clearInterval(T.iv);T.end=null;T.ring=false;view();return}
+  T.end=Date.now()+15*60000;T.ring=false;
+  T.iv=setInterval(()=>{const b=document.getElementById("tm");if(b)b.querySelector(".timer-time").textContent=timerLabel();
+    if(Date.now()>=T.end){clearInterval(T.iv);T.end=null;T.ring=true;view()}},1000);
+  view();
+}
+
+/* =========================================================
+   ANSICHTEN
+   ========================================================= */
+const app=document.getElementById("app");
+let mode="home",cur={c:0,i:0};
+
+function toolbar(left){
+  const bar=el("div","toolbar");bar.appendChild(left||el("span"));
+  const g=el("div","tgroup");
+  const tm=el("button","tbtn");tm.id="tm";tm.type="button";tm.setAttribute("aria-pressed",String(!!T.end));
+  tm.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span class="timer-time">${timerLabel()}</span>`;
+  tm.title=T.end?"Timer stoppen":"15 Minuten konzentriert lernen, dann Pause";tm.onclick=toggleTimer;g.appendChild(tm);
+  const sizes=[["m","A"],["l","A+"],["xl","A++"]];
+  sizes.forEach(([k,l])=>{const b=el("button","tbtn",l);b.type="button";b.setAttribute("aria-pressed",String((S.size||"m")===k));b.setAttribute("aria-label","Schriftgröße "+l);
+    b.onclick=()=>{S.size=k;document.documentElement.dataset.size=k;save();view()};g.appendChild(b)});
+  bar.appendChild(g);return bar;
+}
+function breakBanner(){
+  if(!T.ring)return null;
+  const b=el("div","banner",`<span>15 Minuten geschafft. Mach 5 Minuten Pause: aufstehen, trinken, kurz bewegen.</span>`);
+  const x=el("button","x","Okay");x.type="button";x.onclick=()=>{T.ring=false;view()};b.appendChild(x);return b;
+}
+
+function view(){
+  const y=window.scrollY;
+  app.innerHTML="";
+  if(mode==="home")home();else if(mode==="lesson")lesson();else finished();
+  if(mode==="home")window.scrollTo(0,y);
+}
+
+function home(){
+  app.appendChild(toolbar(el("span","eyebrow","TI-Nspire CX II CAS · Klasse 12")));
+  const bn=breakBanner();if(bn)app.appendChild(bn);
+  const total=CH.reduce((a,c)=>a+c.steps.length,0),done=CH.reduce((a,_,c)=>a+chapDone(c),0);
+  const hero=el("section","hero");
+  hero.innerHTML=`<h1>Nspire-Lernpfad</h1><p>8 Kapitel. Immer abwechselnd: kurz erklärt, dann gleich ausprobieren. Du siehst immer nur einen Schritt. Leg deinen Taschenrechner neben dich.</p>`;
+  const go=el("button","big");go.type="button";
+  const pos=S.pos&&CH[S.pos.c]?S.pos:null;
+  go.innerHTML=done===0?"Los geht's":(pos?`Weiter bei: ${CH[pos.c].title}`:"Weitermachen");
+  go.onclick=()=>{const p=pos||firstOpen();openStep(p.c,p.i)};
+  const row=el("div");row.style.cssText="display:flex;gap:12px;align-items:center;flex-wrap:wrap";row.appendChild(go);
+  row.appendChild(el("span","muted",`${done} von ${total} Schritten erledigt`));
+  hero.appendChild(row);app.appendChild(hero);
+
+  const how=el("div","howto");
+  how.innerHTML=`<div><b>Ein Schritt nach dem anderen</b>Lies kurz, mach mit, dann «Weiter».</div><div><b>Fehler sind okay</b>Du kannst es so oft probieren, wie du willst.</div><div><b>Pausen einplanen</b>Starte oben den Fokus-Timer. Nach 15 Minuten sagt er Bescheid.</div>`.replace(/«Weiter»/,"„Weiter“");
+  app.appendChild(how);
+
+  const ol=el("ol","path");
+  CH.forEach((ch,c)=>{const d=chapDone(c),n=ch.steps.length;
+    const li=el("li");
+    const node=el("div","node"+(d===n?" full":d>0?" part":""),d===n?`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" aria-hidden="true"><path d="M5 12l5 5L19 7"/></svg>`:String(c+1));
+    const b=el("button","chap");b.type="button";
+    b.innerHTML=`<span class="chap-title">${ch.title}</span><span class="muted" style="font-size:.92rem">${ch.goal}</span><span class="chap-meta"><span>ca. ${ch.min} min</span><span>${d} / ${n} Schritte</span></span><span class="minibar"><span style="width:${d/n*100}%"></span></span>`;
+    b.onclick=()=>{const i=ch.steps.findIndex((_,k)=>!S.done[sk(c,k)]);openStep(c,i<0?0:i)};
+    li.appendChild(node);li.appendChild(b);ol.appendChild(li)});
+  const sec=el("section");sec.appendChild(el("h2",null,"Deine Kapitel")).style.cssText="font-size:1.3rem;margin-bottom:14px";sec.appendChild(ol);app.appendChild(sec);
+
+  const foot=el("div","toolbar");foot.appendChild(el("span","muted","Dein Fortschritt bleibt nur in diesem Browser gespeichert.")).style.fontSize=".85rem";
+  const rs=el("button","tbtn","Neu anfangen");rs.type="button";let armed=false;
+  rs.onclick=()=>{if(!armed){armed=true;rs.textContent="Wirklich alles löschen?";setTimeout(()=>{armed=false;rs.textContent="Neu anfangen"},4000);return}
+    S.done={};S.ans={};S.pos=null;save();view()};
+  foot.appendChild(rs);app.appendChild(foot);
+}
+function firstOpen(){for(let c=0;c<CH.length;c++){const i=CH[c].steps.findIndex((_,k)=>!S.done[sk(c,k)]);if(i>=0)return{c,i}}return{c:0,i:0}}
+function openStep(c,i){mode="lesson";cur={c,i};S.pos={c,i};save();view();window.scrollTo(0,0)}
+
+function lesson(){
+  const ch=CH[cur.c],st=ch.steps[cur.i],key=sk(cur.c,cur.i);
+  const back=el("button","tbtn","← Übersicht");back.type="button";back.onclick=()=>{mode="home";view();window.scrollTo(0,0)};
+  app.appendChild(toolbar(back));
+  const bn=breakBanner();if(bn)app.appendChild(bn);
+
+  const top=el("div","lesson-top");
+  top.innerHTML=`<div class="row"><span class="eyebrow">Kapitel ${cur.c+1} · ${ch.title}</span><span class="muted" style="font-size:.85rem;font-variant-numeric:tabular-nums">Schritt ${cur.i+1} von ${ch.steps.length}</span></div>`;
+  const dots=el("div","dots");
+  ch.steps.forEach((_,k)=>{const d=el("button","dot"+(S.done[sk(cur.c,k)]?" done":"")+(k===cur.i?" cur":""));d.type="button";d.setAttribute("aria-label",`Schritt ${k+1}`);d.onclick=()=>openStep(cur.c,k);dots.appendChild(d)});
+  top.appendChild(dots);app.appendChild(top);
+
+  const card=el("section","card");card.setAttribute("aria-live","polite");let next=null;
+  const markDone=()=>{if(!S.done[key]){S.done[key]=true;save()}card.classList.add("solved");
+    dots.children[cur.i].classList.add("done");if(!next)return;next.classList.remove("ghost");next.textContent=cur.i===ch.steps.length-1?"Kapitel abschließen →":"Weiter →"};
+
+  if(st.t==="info"){
+    card.appendChild(el("span","type info","Erklärung"));
+    card.appendChild(el("h2",null,st.h));
+    const b=el("div","body",md(st.b));card.appendChild(b);
+    if(st.docmap)b.appendChild(el("div","docmap",`<div class="doc"><b>Dokument „Mathe“</b><div class="pages"><div class="pg"><b>Seite 1</b>Calculator</div><div class="pg"><b>Seite 2</b>Graphs</div><div class="pg"><b>Seite 3</b>Calculator</div></div></div>`));
+    if(st.keys)b.appendChild(el("div","keypath",st.keys.map(k=>/«/.test(k)?md(k):`<span class="menu">${md(k)}</span>`).join('<span class="arrow" aria-hidden="true">→</span>')));
+    if(st.plot)b.insertAdjacentHTML("beforeend",plotSVG(st.plot));
+    if(st.merke)b.appendChild(el("div","merke",`<b>Merke:</b> ${md(st.merke)}`));
+    if(st.try){const t=el("div","try",`<span class="label">Mach mit</span><p>${md(st.try)}</p>`);
+      const cb=el("button","check",S.ans[key]?"✓ Erledigt":"Hab ich gemacht");cb.type="button";cb.setAttribute("aria-pressed",String(!!S.ans[key]));
+      cb.onclick=()=>{S.ans[key]=!S.ans[key];save();cb.setAttribute("aria-pressed",String(S.ans[key]));cb.textContent=S.ans[key]?"✓ Erledigt":"Hab ich gemacht"};
+      t.appendChild(cb);b.appendChild(t)}
+  }
+  else if(st.t==="mc"){
+    card.appendChild(el("span","type do","Kurz testen"));
+    card.appendChild(el("p","q",md(st.q)));
+    const opts=el("div","opts");const fb=el("div","fb");fb.hidden=true;
+    st.o.forEach((o,k)=>{const b=el("button","opt",`<span class="l">${"ABCD"[k]}</span><span>${md(o)}</span>`);b.type="button";
+      b.onclick=()=>{if(k===st.c){b.classList.add("right");opts.querySelectorAll(".opt").forEach(x=>x.disabled=true);
+          fb.hidden=false;fb.className="fb ok";fb.innerHTML=`${praise()}<span class="ex">${md(st.ex)}</span>`;markDone()}
+        else{b.classList.add("wrong","shake");b.disabled=true;fb.hidden=false;fb.className="fb bad";fb.innerHTML=`Nicht ganz. Versuch es noch mal.`}};
+      opts.appendChild(b)});
+    card.appendChild(opts);card.appendChild(fb);
+    if(S.done[key]){const b=opts.children[st.c];b.classList.add("right");opts.querySelectorAll(".opt").forEach(x=>x.disabled=true);fb.hidden=false;fb.className="fb ok";fb.innerHTML=`Schon gelöst.<span class="ex">${md(st.ex)}</span>`}
+  }
+  else if(st.t==="order"){
+    card.appendChild(el("span","type do","Sortieren"));
+    card.appendChild(el("p","q",md(st.q)));
+    const doneL=el("div","order-done"),pool=el("div","order-pool"),fb=el("div","fb");fb.hidden=true;
+    let n=0;
+    const finish=()=>{fb.hidden=false;fb.className="fb ok";fb.innerHTML=`${praise()}<span class="ex">${md(st.ex)}</span>`;markDone()};
+    const addDone=t=>{n++;doneL.appendChild(el("div","item",`<b>${n}</b><span>${md(t)}</span>`))};
+    if(S.done[key]){st.items.forEach(addDone);finish()}
+    else shuffle(st.items).forEach(t=>{const b=el("button","opt",`<span>${md(t)}</span>`);b.type="button";
+      b.onclick=()=>{if(t===st.items[n]){addDone(t);b.remove();fb.hidden=true;if(n===st.items.length)finish()}
+        else{b.classList.remove("shake");void b.offsetWidth;b.classList.add("shake");fb.hidden=false;fb.className="fb bad";fb.textContent="Das kommt später. Was ist davor dran?"}};
+      pool.appendChild(b)});
+    card.appendChild(doneL);card.appendChild(pool);card.appendChild(fb);
+  }
+  else if(st.t==="task"){
+    card.appendChild(el("span","type do","Übung am Rechner"));
+    card.appendChild(el("p","q",md(st.q)));
+    const ok=new Array(st.parts.length).fill(false);
+    st.parts.forEach((pt,k)=>{
+      const pk=key+":"+k,id="in-"+pk.replace(/[^a-z0-9]/gi,"-");
+      const d=el("div","part");
+      d.innerHTML=`<label for="${id}">${md(pt.label)} ${pt.sub?`<span class="sub">${pt.sub}</span>`:""}</label><div class="entry"><input id="${id}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${pt.ph||""}"><button class="btn" type="button">Prüfen</button></div><div class="syms">${["√","π","e","^","(",")",";"].map(s=>`<button type="button" class="sym" data-s="${s==="√"?"√(":s==="e"?"e^(":s}" aria-label="${s} einfügen">${s}</button>`).join("")}</div><div class="fb" hidden></div>`;
+      const inp=d.querySelector("input"),fb=d.querySelector(".fb");
+      const sv=S.ans[pk];if(sv){inp.value=sv.v||"";if(sv.ok){ok[k]=true;d.classList.add("ok");fb.hidden=false;fb.className="fb ok";fb.textContent="Richtig!"}}
+      const run=()=>{const r=check(pt,inp.value);fb.hidden=false;fb.className="fb "+r.s;fb.textContent=r.s==="ok"?praise():r.m;
+        d.classList.toggle("ok",r.s==="ok");d.classList.toggle("bad",r.s==="bad");ok[k]=r.s==="ok";S.ans[pk]={v:inp.value,ok:ok[k]};save();
+        if(ok.every(Boolean))markDone();else if(r.s==="ok"){const nx=card.querySelectorAll("input")[k+1];if(nx)nx.focus()}};
+      d.querySelector(".btn").onclick=run;
+      inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();run()}});
+      d.querySelectorAll(".sym").forEach(b=>b.onclick=()=>{const s=b.dataset.s,a=inp.selectionStart??inp.value.length,z=inp.selectionEnd??a;inp.value=inp.value.slice(0,a)+s+inp.value.slice(z);inp.focus();inp.setSelectionRange(a+s.length,a+s.length)});
+      card.appendChild(d)});
+    const h=el("div","helpers");
+    const tb=el("button","btn ghost","Tipp: So geht es am Rechner");tb.type="button";
+    const sb=el("button","btn ghost","Lösung zeigen");sb.type="button";
+    const tp=el("div","panel",`<h3>Eingabe am TI-Nspire</h3>${st.tip.map(t=>`<p>${md(t)}</p>`).join("")}`);tp.hidden=true;
+    const sp=el("div","panel",`<h3>Lösung</h3>${st.sol}`);sp.hidden=true;
+    tb.onclick=()=>{tp.hidden=!tp.hidden};sb.onclick=()=>{sp.hidden=!sp.hidden;sb.textContent=sp.hidden?"Lösung zeigen":"Lösung ausblenden"};
+    h.appendChild(tb);h.appendChild(sb);card.appendChild(h);card.appendChild(tp);card.appendChild(sp);
+  }
+  app.appendChild(card);
+
+  const nav=el("div","navrow");
+  const prev=el("button","big ghost","←");prev.type="button";prev.setAttribute("aria-label","Zurück");prev.disabled=cur.i===0;prev.onclick=()=>openStep(cur.c,cur.i-1);
+  const last=cur.i===ch.steps.length-1;
+  next=el("button","big",last?"Kapitel abschließen →":"Weiter →");next.type="button";
+  if(st.t!=="info"&&!S.done[key]){next.classList.add("ghost");next.textContent="Später machen →"}
+  next.onclick=()=>{if(st.t==="info")S.done[key]=true;save();if(last){mode="done";S.pos=null;
+      const nc=CH.findIndex((_,c)=>c>cur.c&&chapDone(c)<CH[c].steps.length);if(nc>=0)S.pos={c:nc,i:0};save();view();window.scrollTo(0,0)}else openStep(cur.c,cur.i+1)};
+  nav.appendChild(prev);nav.appendChild(next);app.appendChild(nav);
+  if(st.t==="info"&&S.done[key])card.classList.add("solved");
+  app.appendChild(el("p","hint","Tipp: Mit den Pfeiltasten ← → kannst du auch blättern."));
+}
+
+function finished(){
+  const ch=CH[cur.c],d=chapDone(cur.c),n=ch.steps.length,open=n-d;
+  const back=el("button","tbtn","← Übersicht");back.type="button";back.onclick=()=>{mode="home";view()};
+  app.appendChild(toolbar(back));
+  const bn=breakBanner();if(bn)app.appendChild(bn);
+  const card=el("section","card done-card");
+  card.innerHTML=`<div class="done-badge pop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L19 7"/></svg></div>
+    <span class="eyebrow">Kapitel ${cur.c+1} geschafft</span><h2>${ch.title}</h2>
+    <p class="muted">${open===0?"Alle Schritte erledigt. Sehr gut!":`${d} von ${n} Schritten erledigt. ${open} ${open===1?"Übung wartet":"Übungen warten"} noch auf dich. Du findest sie über die grauen Punkte.`}</p>
+    <div class="merke"><b>Das nimmst du mit:</b><ul style="margin:6px 0 0;padding-left:1.2em;display:grid;gap:4px">${ch.merke.map(m=>`<li>${md(m)}</li>`).join("")}</ul></div>
+    <p class="muted">Gute Zeit für eine kurze Pause: aufstehen, Wasser trinken, 2 Minuten bewegen.</p>`;
+  app.appendChild(card);
+  const nav=el("div","navrow");
+  const rev=el("button","big ghost","Kapitel ansehen");rev.type="button";rev.onclick=()=>{const i=ch.steps.findIndex((_,k)=>!S.done[sk(cur.c,k)]);openStep(cur.c,i<0?0:i)};
+  nav.appendChild(rev);
+  if(cur.c<CH.length-1){const nx=el("button","big",`Weiter: ${CH[cur.c+1].title} →`);nx.type="button";nx.onclick=()=>openStep(cur.c+1,0);nav.appendChild(nx)}
+  else{const h=el("button","big","Zur Übersicht");h.type="button";h.onclick=()=>{mode="home";view()};nav.appendChild(h)}
+  app.appendChild(nav);
+}
+
+document.addEventListener("keydown",e=>{
+  if(mode!=="lesson"||/INPUT|TEXTAREA/.test(document.activeElement.tagName))return;
+  if(e.key==="ArrowRight"){const b=document.querySelector(".navrow .big:last-child");if(b)b.click()}
+  if(e.key==="ArrowLeft"&&cur.i>0)openStep(cur.c,cur.i-1);
+});
+
+view();
+</script>
+
+</body>
+</html>
